@@ -1,9 +1,11 @@
 ﻿#nullable disable
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Data;
+using TodoApp.DTO;
 using TodoApp.Models;
 
 
@@ -12,6 +14,7 @@ namespace TodoApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
         private readonly TodoContext _context;
@@ -77,18 +80,21 @@ namespace TodoApp.Controllers
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> PostUser(UserRoleDto user)
         {
             bool isExist = await _context.users.AnyAsync(u => u.Username == user.Username);
 
             if (!isExist)
             {
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(user.Password);
-                user.Password = passwordHash;
-                _context.users.Add(user);
+                User newUser = new User();
+                newUser.Username = user.Username;
+                newUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                newUser.Role = user.Role;
+
+                _context.users.Add(newUser);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetUser", new { id = user.UserId }, user);
+                return CreatedAtAction(nameof(UsersController.PostUser), "UsersController", null, newUser);
             }
             return Conflict("Username is existed");
         }

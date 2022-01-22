@@ -23,5 +23,8 @@ namespace TodoApp.Models
 
         [Required]
         public bool UserIsDeleted { get; set; } = false;
+
+        [Required]
+        public string Role { get; set; } = "Noob";
     }
 }

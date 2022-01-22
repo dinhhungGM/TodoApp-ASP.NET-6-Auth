@@ -30,6 +30,8 @@ namespace TodoApp.Controllers
 
         // POST: api/Auth/register
         [HttpPost("register")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<User>> Register(UserDto request)
         {
             if (await IsExist(request.Username))
@@ -40,10 +42,12 @@ namespace TodoApp.Controllers
                 _user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 _context.users.Add(_user);
                 await _context.SaveChangesAsync();            
-            return Ok(_user);
+            return CreatedAtAction(nameof(AuthController.Register), "Auth", null, _user);
         }
 
         [HttpPost("login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<string>> Login(UserDto request)
         {
             if (! await IsExist(request.Username))
@@ -72,7 +76,8 @@ namespace TodoApp.Controllers
         {
             List<Claim> claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Name, user.Username)
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value));

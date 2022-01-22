@@ -17,7 +17,8 @@ namespace TodoApp.Migrations
                     Username = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
-                    UserIsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    UserIsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
