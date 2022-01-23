@@ -1,11 +1,15 @@
 import "./AuthForm.scss";
 import { Form, Button } from "react-bootstrap";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 import React from "react";
+import { registerAsync, selectAuthenticated } from "./AuthSlice";
+import { useAppSelector, useAppDispatch } from "../../app/hooks";
 
 const LoginForm = () => {
+  const authenticated = useAppSelector(selectAuthenticated);
+  const dispatch = useAppDispatch();
   const [formAuth, setFormAuth] = useState({
     username: "",
     password: "",
@@ -22,13 +26,16 @@ const LoginForm = () => {
   const handleSubmitForm = (event: any) => {
     event.preventDefault();
     console.log(formAuth);
+    dispatch(registerAsync(formAuth));
     setFormAuth({
       username: "",
       password: "",
       repeatPassword: ""
     });
   };
-  return (
+  return authenticated ? (
+    <Navigate to="/dashboard" />
+  ) : (
     <div className="auth-container">
       <div className="auth-form">
         <h1>REGISTER</h1>

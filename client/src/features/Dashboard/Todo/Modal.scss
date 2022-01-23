@@ -1,0 +1,19 @@
+.btn-footer{
+    
+    
+    .btn-footer__group {
+        width: 25%;
+        
+        float: right;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-around;
+        box-sizing: border-box;
+        .btn-footer__group-item {
+            padding: 0 10%;
+            height: 3rem;
+            box-sizing: border-box;
+        }
+    }
+    
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -28,10 +29,31 @@ namespace TodoApp.Controllers
             _configuration = configuration;
         }
 
+        // GET: api/Auth
+        [HttpGet]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public  ActionResult<string> ValidateToken()
+        {
+            var handler = new JwtSecurityTokenHandler();
+            string authHeader = Request.Headers["Authorization"];
+            authHeader = authHeader.Replace("Bearer ", "");
+            var jsonToken = handler.ReadToken(authHeader);
+            var tokenS = handler.ReadToken(authHeader) as JwtSecurityToken;
+            var name = tokenS.Claims.First(claim => claim.Type == ClaimTypes.Name).Value;
+            var userId = tokenS.Claims.First(claim => claim.Type == ClaimTypes.Sid).Value;
+            return Ok(new
+            {
+                username = name,
+                userId = userId
+            });
+        }
+
         // POST: api/Auth/register
         [HttpPost("register")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+
         public async Task<ActionResult<User>> Register(UserDto request)
         {
             if (await IsExist(request.Username))
@@ -77,7 +99,8 @@ namespace TodoApp.Controllers
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Sid, user.UserId.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value));

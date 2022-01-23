@@ -1,7 +1,5 @@
 ﻿#nullable disable
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Data;
@@ -14,7 +12,6 @@ namespace TodoApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
         private readonly TodoContext _context;
@@ -74,7 +71,7 @@ namespace TodoApp.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/Users
@@ -108,16 +105,64 @@ namespace TodoApp.Controllers
             {
                 return NotFound();
             }
-
+            _context.todoItems.RemoveRange(
+                _context.todoItems.Where(todo => todo.User.UserId == id)
+             );
             _context.users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(id);
         }
 
         private bool UserExists(Guid id)
         {
             return _context.users.Any(e => e.UserId == id);
         }
+
+        // GET: api/Users/5/TodoItems
+        [HttpGet("{id}/TodoItems")]
+        [Authorize(Roles = "Noob,Admin" )]
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems(Guid id)
+        {
+            return await _context.todoItems.Where(
+                todo => todo.User.UserId == id).ToListAsync();
+        }
+
+        // PUT: api/Users/5/TodoItems/9
+        [HttpPut("{id}/TodoItems/{item}")]
+        [Authorize(Roles = "Noob,Admin")]
+        public async Task<IActionResult> PutTodoItem(Guid id, Guid item, UpdateTodoItemDto updatedItem)
+        {
+            TodoItem todoItem = await _context.todoItems.FirstOrDefaultAsync(x => x.TodoId == item);
+            todoItem.TodoName = updatedItem.TodoName;
+            todoItem.TodoDescription = updatedItem.TodoDescription;
+            todoItem.TodoIsComplete = updatedItem.TodoIsComplete;
+
+            _context.Entry(todoItem).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TodoItemExists(item))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok(todoItem);
+
+        }
+        private bool TodoItemExists(Guid id)
+        {
+            return _context.todoItems.Any(e => e.TodoId == id);
+        }
+
     }
 }

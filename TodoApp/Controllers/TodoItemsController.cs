@@ -1,13 +1,9 @@
 ﻿#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Data;
+using TodoApp.DTO;
 using TodoApp.Models;
 
 namespace TodoApp.Controllers
@@ -28,6 +24,7 @@ namespace TodoApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TodoItem>>> GettodoItems()
         {
+            
             return await _context.todoItems.ToListAsync();
         }
 
@@ -48,12 +45,12 @@ namespace TodoApp.Controllers
         // PUT: api/TodoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTodoItem(Guid id, TodoItem todoItem)
+        public async Task<IActionResult> PutTodoItem(Guid id, UpdateTodoItemDto updatedItem)
         {
-            if (id != todoItem.TodoId)
-            {
-                return BadRequest();
-            }
+            TodoItem todoItem = await _context.todoItems.FirstOrDefaultAsync(x => x.TodoId == id);
+            todoItem.TodoName = updatedItem.TodoName;
+            todoItem.TodoDescription = updatedItem.TodoDescription;
+            todoItem.TodoIsComplete = updatedItem.TodoIsComplete;
 
             _context.Entry(todoItem).State = EntityState.Modified;
 
@@ -73,18 +70,24 @@ namespace TodoApp.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(todoItem);
+
         }
 
         // POST: api/TodoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<TodoItem>> PostTodoItem(TodoItem todoItem)
+        public async Task<ActionResult<TodoItem>> PostTodoItem(TodoDto todoItem)
         {
-            _context.todoItems.Add(todoItem);
+            TodoItem todo = new TodoItem();
+            User user = await _context.users.FindAsync(todoItem.UserId);
+            todo.TodoName = todoItem.TodoName;
+            todo.TodoDescription = todoItem.TodoDescription;
+            todo.User = user;
+            _context.todoItems.Add(todo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTodoItem", new { id = todoItem.TodoId }, todoItem);
+            return CreatedAtAction("GetTodoItem", new { id = todo.TodoId }, todo);
         }
 
         // DELETE: api/TodoItems/5
@@ -100,7 +103,7 @@ namespace TodoApp.Controllers
             _context.todoItems.Remove(todoItem);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(id);
         }
 
         private bool TodoItemExists(Guid id)

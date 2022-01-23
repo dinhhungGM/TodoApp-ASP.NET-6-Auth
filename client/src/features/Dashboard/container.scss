@@ -1,0 +1,26 @@
+.dashboard__container {
+    height: auto;
+    width: 100%;
+    
+    padding: 6rem 6rem;
+}
+
+.dashboard__addTodo {
+    position: fixed;
+    top: 50%;
+    bottom: 50%;
+    left: 0;
+    right: 0;
+
+    .dashboard__addTodo-icon {
+        width: 5rem;
+        height: 5rem;
+        opacity: .8;
+        background-color: rgb(56, 177, 56);
+        border: none;
+    }
+
+    .dashboard__addTodo-icon:hover {
+        opacity: 1;
+    }
+}
